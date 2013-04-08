@@ -6,6 +6,7 @@
         "name": "Aung L Oo",
         "email": "aungloo@gmail.com"
     },
+    "main": "alogger",
     "repository": {
         "type": "git",
         "url": "https://github.com/ninegene/alogger.git"
