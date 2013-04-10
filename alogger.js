@@ -34,6 +34,7 @@ function setLogLevel(level) {
     switch (level) {
         case 0:
         case "none":
+        case "off":
             curLogLevel = Levels.NONE;
             break;
         case 1:
