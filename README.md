@@ -15,9 +15,9 @@ There are 5 log levels ("none", "error", "warn", "info", "debug"). By default it
 ### Creating a logger object
 
 ``` js
-var log = require('./alogger').logger("test");
+var log = require('./alogger').logger("testlogger");
 
-log.debug('log to %s level - %d', 'debug', 4, "is logging out put to stdout');
+log.debug('log to %s level - %d', 'debug', 4, 'is logging out put to stdout');
 log.info('log to %s level - %d', 'info', 3, 'is logging out put to stdout');
 log.warn('log to %s level - %d', 'warn', 2, 'is logging out put to stderr');
 log.error('log to %s level - %d', 'error', 1, 'is logging out put to stderr');
