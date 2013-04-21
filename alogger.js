@@ -1,62 +1,79 @@
 var util = require('util');
 
-var Levels = {
-    DEBUG: 4,
-    INFO: 3,
-    WARN: 2,
+const LevelsString = ['off', 'error', 'warn', 'info', 'debug'];
+const Levels = {
+    OFF: 0,
     ERROR: 1,
-    NONE: 0
+    WARN: 2,
+    INFO: 3,
+    DEBUG: 4
 };
 
-var curLogLevel = Levels.INFO;
-
-var cache = {};
+var loggers = {};
+var levels = {};
 
 function logger(logName) {
-    cache[logName] = cache[logName] || {
-        info: info(logName),
-        warn: warn(logName),
-        error: error(logName),
-        debug: debug(logName),
-        str: str
-    };
+    logName = logName || '';
+    
+    if (!loggers[logName]) {
+        levels[logName] = Levels.INFO; // default level
+        loggers[logName] = {
+            info: info(logName),
+            warn: warn(logName),
+            error: error(logName),
+            debug: debug(logName),
+            str: str,
+            level: function (level) {
+                if (typeof level == 'undefined') {
+                    return LevelsString[levels[logName]];
+                }
+                levels[logName] = translateLogLevel(level);
+            }
+        };
+    }
 
-    return cache[logName];
+    return loggers[logName];
 }
 
 function isString(obj) {
     return Object.prototype.toString.apply(obj) === '[object String]';
 }
 
-function setLogLevel(level) {
+function translateLogLevel(level) {
     level = isString(level) ? level.toLowerCase() : level;
-
+    var logLevel;    
     switch (level) {
         case 0:
+        case '0':
         case "none":
         case "off":
-            curLogLevel = Levels.NONE;
+            logLevel = Levels.OFF;
             break;
         case 1:
+        case '1':
         case "error":
-            curLogLevel = Levels.ERROR;
+            logLevel = Levels.ERROR;
             break;
         case 2:
+        case '2':
         case "warn":
-            curLogLevel = Levels.WARN;
+            logLevel = Levels.WARN;
             break;
         case 3:
+        case '3':
         case "info":
-            curLogLevel = Levels.INFO;
+            logLevel = Levels.INFO;
             break;
         case 4:
+        case '4':
         case "debug":
         case "all":
-            curLogLevel = Levels.DEBUG;
+            logLevel = Levels.DEBUG;
             break;
         default:
-            curLogLevel = Levels.INFO;
+            logLevel = Levels.INFO;
     }
+    return logLevel;
 }
 
 var prevDates = {};
@@ -88,7 +105,7 @@ function fmt(logName, logLevel, args) {
     var ds = date.toString();
     objs.push(ds.substr(8,2) /*+ ds.substr(0,3) */+ ' ' + ds.substr(16,8));
 //    objs.push(date.toLocaleTimeString());
-    objs.push(logName + ' [' + logLevel + ']');
+    objs.push(logLevel + (logName ? ' ' + logName + ':' : ''));
     objs.push(util.format.apply(this, args));
     objs.push('| ' + diff + '\n');
     return objs.join(' ');
@@ -100,37 +117,38 @@ function str(obj) {
 
 function info(name) {
     return function info() {
-        if (curLogLevel >= Levels.INFO) {
-            process.stdout.write(fmt(name, 'i', arguments));
+        if (levels[name] >= Levels.INFO) {
+            process.stdout.write(fmt(name, '[i]', arguments));
         }
     };
 }
 
 function debug(name) {
     return function debug() {
-        if (curLogLevel >= Levels.DEBUG) {
-            process.stdout.write(fmt(name, 'd', arguments));
+        if (levels[name] >= Levels.DEBUG) {
+            process.stdout.write(fmt(name, '[d]', arguments));
         }
     };
 }
 
 function warn(name) {
     return function warn() {
-        if (curLogLevel >= Levels.WARN) {
-            process.stderr.write(fmt(name, 'w', arguments));
+        if (levels[name] >= Levels.WARN) {
+            process.stderr.write(fmt(name, '[w]', arguments));
         }
     };
 }
 
 function error(name) {
     return function error() {
-        if (curLogLevel >= Levels.ERROR) {
-            process.stderr.write(fmt(name, 'e', arguments));
+        if (levels[name] >= Levels.ERROR) {
+            process.stderr.write(fmt(name, '[e]', arguments));
         }
     };
 }
 
-setLogLevel(process.env.LOG_LEVEL);
-
-exports.setLogLevel = setLogLevel;
 exports.logger = logger;
+exports.loggers = function() { 
+    const c = loggers;  
+    return c;
+};
