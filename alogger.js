@@ -14,7 +14,7 @@ var levels = {};
 
 function logger(logName) {
     logName = logName || '';
-    
+
     if (!loggers[logName]) {
         levels[logName] = Levels.INFO; // default level
         loggers[logName] = {
@@ -41,7 +41,7 @@ function isString(obj) {
 
 function translateLogLevel(level) {
     level = isString(level) ? level.toLowerCase() : level;
-    var logLevel;    
+    var logLevel;
     switch (level) {
         case 0:
         case '0':
@@ -102,9 +102,7 @@ function fmt(logName, logLevel, args) {
     }
 
     var objs = [];
-    var ds = date.toString();
-    objs.push(ds.substr(8,2) /*+ ds.substr(0,3) */+ ' ' + ds.substr(16,8));
-//    objs.push(date.toLocaleTimeString());
+    objs.push(fmtDate(date, '%Y-%m-%d %H:%M:%S'));
     objs.push(logLevel + (logName ? ' ' + logName + ':' : ''));
     objs.push(util.format.apply(this, args));
     objs.push('| ' + diff + '\n');
@@ -113,6 +111,32 @@ function fmt(logName, logLevel, args) {
 
 function str(obj) {
     return typeof obj === 'string' ? obj : util.inspect(obj);
+}
+
+function appendZeroIfNecessary(s) {
+    return ('0' + s).substr(-2);
+}
+
+function fmtTimezoneOffset(offset) {
+    return (offset < 0 ? '+' : '-')
+        + appendZeroIfNecessary(parseInt(Math.abs(offset/60), 10))
+        + ':'
+        + appendZeroIfNecessary(Math.abs(offset%60))
+}
+
+function fmtDate(date, fmt) {
+    date = date || new Date();
+    fmt = fmt || '%Y-%m-%d %H:%M:%S %Z';
+    return fmt.replace(/%[YmdHMSZ]/g, function (v) {
+        if (v == '%Y') return date.getFullYear();
+        if (v == '%m') return appendZeroIfNecessary(date.getMonth());
+        if (v == '%d') return appendZeroIfNecessary(date.getDate());
+        if (v == '%H') return appendZeroIfNecessary(date.getHours());
+        if (v == '%M') return appendZeroIfNecessary(date.getMinutes());
+        if (v == '%S') return appendZeroIfNecessary(date.getSeconds());
+        if (v == '%Z') return fmtTimezoneOffset(date.getTimezoneOffset());
+        return v;
+    })
 }
 
 function info(name) {
@@ -148,7 +172,7 @@ function error(name) {
 }
 
 exports.logger = logger;
-exports.loggers = function() { 
-    const c = loggers;  
+exports.loggers = function () {
+    const c = loggers;
     return c;
 };
